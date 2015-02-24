@@ -102,7 +102,7 @@ if [ ! -s ${SOUT}/fastq/${rawFASTQ1}_1.fq_fastqc.zip ] && [ ! -s ${SOUT}/fastq/$
 then
   echo " NGSeasy: Run Pre-Alignment QC on raw Fastq files " `date`
 
-  /usr/local/pipeline/FastQC/fastqc \
+  fastqc \
     --threads ${NCPU} \
     --extract \
     --quiet \
@@ -136,7 +136,7 @@ then
   echo " NGSeasy: Running Trimmomatic: A flexible read trimming tool for NGS data " `date`
 
     # run Trimmomatic
-    java -jar /usr/local/pipeline/Trimmomatic-0.32/trimmomatic-0.32.jar PE \
+    java -jar /usr/share/trimmomatic/lib/trimmomatic.jar PE \
     -threads ${NCPU} \
     -phred33 \
     -trimlog ${SOUT}/fastq/trimm_qc.log \
@@ -152,7 +152,7 @@ then
   echo " NGSeasy: Run Pre-Alignment QC on Filtered/Trimmed Fastq files " `date`
     # FASTQC on paired trimmed files
 
-    /usr/local/pipeline/FastQC/fastqc \
+    fastqc \
     --threads ${NCPU} \
     --extract \
     --quiet \
@@ -185,29 +185,29 @@ if [ "${ALIGNER}" == "bwa" ] && [ ! -s ${SOUT}/alignments/${BAM_PREFIX}.bam ]
 then
   # BWA alignment
   echo " NGSeasy: Running bwa " `date`
-    /usr/local/pipeline/bwa-0.7.10/bwa mem -M -t ${NCPU} ${REFGenomes}/human_g1k_v37.fasta ${qcdPeFASTQ1} ${qcdPeFASTQ2} > ${SOUT}/alignments/${BAM_PREFIX}.raw.sam;
+    bwa mem -M -t ${NCPU} ${REFGenomes}/human_g1k_v37.fasta ${qcdPeFASTQ1} ${qcdPeFASTQ2} > ${SOUT}/alignments/${BAM_PREFIX}.raw.sam;
 
  echo " NGSeasy: SAM to BAM and INDEX  " `date` 
-   /usr/local/pipeline/samtools/samtools view -bhS ${SOUT}/alignments/${BAM_PREFIX}.raw.sam > ${SOUT}/alignments/${BAM_PREFIX}.raw.bam;
-   /usr/local/pipeline/samtools/samtools sort -f   ${SOUT}/alignments/${BAM_PREFIX}.raw.bam ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
-   /usr/local/pipeline/samtools/samtools index     ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
+   samtools view -bhS ${SOUT}/alignments/${BAM_PREFIX}.raw.sam > ${SOUT}/alignments/${BAM_PREFIX}.raw.bam;
+   samtools sort -f   ${SOUT}/alignments/${BAM_PREFIX}.raw.bam ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
+   samtools index     ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
    
 elif [ "${ALIGNER}" == "bowtie2" ] && [ ! -s ${SOUT}/alignments/${BAM_PREFIX}.bam ]
 then
   echo " NGSeasy: Running bowtie2 " `date`
     # Bowtie2 alignment
-   /usr/local/pipeline/bowtie2-2.2.3/bowtie2 --local --threads ${NCPU} -x ${REFGenomes}/human_g1k_v37 -1 ${qcdPeFASTQ1} -2 ${qcdPeFASTQ2} -S ${SOUT}/alignments/${BAM_PREFIX}.raw.sam;
+   bowtie2 --local --threads ${NCPU} -x ${REFGenomes}/human_g1k_v37 -1 ${qcdPeFASTQ1} -2 ${qcdPeFASTQ2} -S ${SOUT}/alignments/${BAM_PREFIX}.raw.sam;
 
   echo " NGSeasy: SAM to BAM and INDEX " `date`
-   /usr/local/pipeline/samtools/samtools view -bhS ${SOUT}/alignments/${BAM_PREFIX}.raw.sam > ${SOUT}/alignments/${BAM_PREFIX}.raw.bam;
-   /usr/local/pipeline/samtools/samtools sort -f   ${SOUT}/alignments/${BAM_PREFIX}.raw.bam ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
-   /usr/local/pipeline/samtools/samtools index     ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
+   samtools view -bhS ${SOUT}/alignments/${BAM_PREFIX}.raw.sam > ${SOUT}/alignments/${BAM_PREFIX}.raw.bam;
+   samtools sort -f   ${SOUT}/alignments/${BAM_PREFIX}.raw.bam ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
+   samtools index     ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
 
 elif [ "${ALIGNER}" == "novoalign" ] && [ ! -s ${SOUT}/alignments/${BAM_PREFIX}.bam ]
 then
   echo " NGSeasy: Running novolaign " `date`
     # Novoalign alignment 
-   /usr/local/pipeline/novocraft/novoalign \
+   novoalign \
    -d ${REFGenomes}/human_g1k_v37.novoIndex \
    -f ${qcdPeFASTQ1} ${qcdPeFASTQ2} \
    -F STDFQ \
@@ -218,30 +218,30 @@ then
    -i PE 300,150 -c ${NCPU} -k -K ${SOUT}/alignments/${BAM_PREFIX}.K.stats -o SAM > ${SOUT}/alignments/${BAM_PREFIX}.raw.sam;
 
   echo " NGSeasy: SAM to BAM and INDEX  " `date`
-   /usr/local/pipeline/samtools/samtools view -bhS ${SOUT}/alignments/${BAM_PREFIX}.raw.sam > ${SOUT}/alignments/${BAM_PREFIX}.raw.bam;
-   /usr/local/pipeline/samtools/samtools sort -f   ${SOUT}/alignments/${BAM_PREFIX}.raw.bam ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
-   /usr/local/pipeline/samtools/samtools index     ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
+   samtools view -bhS ${SOUT}/alignments/${BAM_PREFIX}.raw.sam > ${SOUT}/alignments/${BAM_PREFIX}.raw.bam;
+   samtools sort -f   ${SOUT}/alignments/${BAM_PREFIX}.raw.bam ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
+   samtools index     ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
 
 elif [ "${ALIGNER}" == "stampy" ] && [ ! -s ${SOUT}/alignments/${BAM_PREFIX}.bam ]
 then
   echo " NGSeasy: Running stampy " `date`
 
   echo " NGSeasy: Running stampy bwa "
-    /usr/local/pipeline/bwa-0.7.10/bwa mem -M -t ${NCPU} ${REFGenomes}/human_g1k_v37.fasta ${qcdPeFASTQ1} ${qcdPeFASTQ2} \
+    bwa mem -M -t ${NCPU} ${REFGenomes}/human_g1k_v37.fasta ${qcdPeFASTQ1} ${qcdPeFASTQ2} \
     > ${SOUT}/alignments/${BAM_PREFIX}.tmp.sam;
 
   echo " NGSeasy: Running sam to bam stampy bwa "
-   /usr/local/pipeline/samtools/samtools view -bhS ${SOUT}/alignments/${BAM_PREFIX}.tmp.sam > ${SOUT}/alignments/${BAM_PREFIX}.tmp.bam;
+   samtools view -bhS ${SOUT}/alignments/${BAM_PREFIX}.tmp.sam > ${SOUT}/alignments/${BAM_PREFIX}.tmp.bam;
     rm ${SOUT}/alignments/${BAM_PREFIX}.tmp.sam
 
   echo " NGSeasy: Running sort bam stampy bwa "
-   /usr/local/pipeline/samtools/samtools sort -f   ${SOUT}/alignments/${BAM_PREFIX}.tmp.bam ${SOUT}/alignments/${BAM_PREFIX}.tmpsort.bam;
-   /usr/local/pipeline/samtools/samtools index     ${SOUT}/alignments/${BAM_PREFIX}.tmpsort.bam;
+   samtools sort -f   ${SOUT}/alignments/${BAM_PREFIX}.tmp.bam ${SOUT}/alignments/${BAM_PREFIX}.tmpsort.bam;
+   samtools index     ${SOUT}/alignments/${BAM_PREFIX}.tmpsort.bam;
    rm ${SOUT}/alignments/${BAM_PREFIX}.tmp.bam
 
   echo " NGSeasy: Running Stampy aligner on bwa bam "
   
-python  /usr/local/pipeline/stampy-1.0.23/stampy.py \
+  stampy.py \
     -g ${REFGenomes}/human_g1k_v37 \
     -h ${REFGenomes}/human_g1k_v37 \
     -t ${NCPU} \
@@ -258,9 +258,9 @@ python  /usr/local/pipeline/stampy-1.0.23/stampy.py \
     -f sam
 
   echo " NGSeasy: Running Stampy sam to bam "
-   /usr/local/pipeline/samtools/samtools view -bhS ${SOUT}/alignments/${BAM_PREFIX}.raw.sam > ${SOUT}/alignments/${BAM_PREFIX}.raw.bam;
-   /usr/local/pipeline/samtools/samtools sort -f   ${SOUT}/alignments/${BAM_PREFIX}.raw.bam ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
-   /usr/local/pipeline/samtools/samtools index     ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
+   samtools view -bhS ${SOUT}/alignments/${BAM_PREFIX}.raw.sam > ${SOUT}/alignments/${BAM_PREFIX}.raw.bam;
+   samtools sort -f   ${SOUT}/alignments/${BAM_PREFIX}.raw.bam ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
+   samtools index     ${SOUT}/alignments/${BAM_PREFIX}.sort.bam;
 
   echo " NGSeasy: Remove Stampy intermediate bam files " 
     rm ${SOUT}/alignments/${BAM_PREFIX}.raw.sam
@@ -286,7 +286,7 @@ echo " NGSeasy: Getting Platform Unit Information "  `date`
   platform_unit=`zcat ${qcdPeFASTQ1} | head -1 | perl -p -i -e 's/:/\t/' | cut -f 1 | perl -p -i -e 's/@//g'`
 echo " NGSeasy: Platform Unit: [$platform_unit]"  `date`
 
-java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/local/pipeline/picardtools/picard-tools-1.115/AddOrReplaceReadGroups.jar \
+java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/share/picard/lib/AddOrReplaceReadGroups.jar \
   TMP_DIR=${SOUT}/tmp \
   VALIDATION_STRINGENCY=SILENT \
   MAX_RECORDS_IN_RAM=100000 \
@@ -309,7 +309,7 @@ if [ ! -e ${SOUT}/reports/${BAM_PREFIX}.dupemk_metrics ]
 then
 echo " NGSeasy: Marking Duplicate Reads " `date`
 
-  java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/local/pipeline/picardtools/picard-tools-1.115/MarkDuplicates.jar \
+  java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/share/picard/lib/MarkDuplicates.jar \
   TMP_DIR=${SOUT}/tmp \
   VALIDATION_STRINGENCY=SILENT \
   MAX_RECORDS_IN_RAM=100000 \
@@ -327,7 +327,7 @@ echo " NGSeasy: START FindCoveredIntervals " `date`
 if [ ! -s ${SOUT}/reports/${BAM_PREFIX}.CoveredIntervals_x4.list ]
 then
 echo " NGSeasy: Finding Covered Intervals : minimum coverage of 4 " `date`
-  java -Xmx6g -Djava.io.tmpdir=${SOUT}/tmp -jar /usr/local/pipeline/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar -T FindCoveredIntervals -R ${REFGenomes}/human_g1k_v37.fasta \
+  java -Xmx6g -Djava.io.tmpdir=${SOUT}/tmp -jar /usr/share/gatk-protected/lib/GenomeAnalysisTK.jar -T FindCoveredIntervals -R ${REFGenomes}/human_g1k_v37.fasta \
   -I ${SOUT}/alignments/${BAM_PREFIX}.bam  \
   -o ${SOUT}/reports/${BAM_PREFIX}.CoveredIntervals_x4.list \
   --coverage_threshold 4;
@@ -341,10 +341,10 @@ if [ ! -s ${SOUT}/reports/${BAM_PREFIX}.merged.bed ]
 then
 echo " NGSeasy: Converting Aligned BAM To BED File " `date`
 # pulls out paired only reads with min qual 10. Set low as donwstream tools filter these regions
- /usr/local/pipeline/samtools/samtools view -b -h -q 10 -F 1796 ${SOUT}/alignments/${BAM_PREFIX}.bam | /usr/local/pipeline/bedtools2/bin/bedtools bamtobed -i stdin > ${SOUT}/reports/${BAM_PREFIX}.bed;
+ samtools view -b -h -q 10 -F 1796 ${SOUT}/alignments/${BAM_PREFIX}.bam | /usr/local/pipeline/bedtools2/bin/bedtools bamtobed -i stdin > ${SOUT}/reports/${BAM_PREFIX}.bed;
 
 echo " NGSeasy: Converting Aligned BED To MERGED BED File " `date` 
- /usr/local/pipeline/bedtools2/bin/bedtools merge -i ${SOUT}/reports/${BAM_PREFIX}.bed > ${SOUT}/reports/${BAM_PREFIX}.merged.bed;
+ bedtools merge -i ${SOUT}/reports/${BAM_PREFIX}.bed > ${SOUT}/reports/${BAM_PREFIX}.merged.bed;
 fi
 
 
@@ -374,7 +374,7 @@ then
 # CollectMultipleMetrics
   echo " NGSeasy: CollectMultipleMetrics " `date`
  
- java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/local/pipeline/picardtools/picard-tools-1.115/CollectMultipleMetrics.jar \
+ java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/share/picard/lib/CollectMultipleMetrics.jar \
   TMP_DIR=${SOUT}/tmp \
   VALIDATION_STRINGENCY=SILENT \
   MAX_RECORDS_IN_RAM=100000 \
@@ -389,7 +389,7 @@ then
 # CollectAlignmentSummaryMetrics
   echo " NGSeasy: CollectAlignmentSummaryMetrics " `date`
   
-  java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/local/pipeline/picardtools/picard-tools-1.115/CollectAlignmentSummaryMetrics.jar \
+  java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/share/picard/lib/CollectAlignmentSummaryMetrics.jar \
   TMP_DIR=${SOUT}/tmp \
   VALIDATION_STRINGENCY=SILENT \
   MAX_RECORDS_IN_RAM=100000 \
@@ -402,7 +402,7 @@ then
 # CollectWgsMetrics
   echo " NGSeasy: CollectWgsMetrics " `date`
   
-  java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/local/pipeline/picardtools/picard-tools-1.115/CollectWgsMetrics.jar \
+  java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/share/picard/lib/CollectWgsMetrics.jar \
   TMP_DIR=${SOUT}/tmp \
   VALIDATION_STRINGENCY=SILENT \
   MAX_RECORDS_IN_RAM=100000 \
@@ -419,7 +419,7 @@ then
 # FlagStat
   echo " NGSeasy: FlagStat " `date`
   
-    java -Xmx6g -Djava.io.tmpdir=${SOUT}/tmp -jar /usr/local/pipeline/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar -T FlagStat -R ${REFGenomes}/human_g1k_v37.fasta \
+    java -Xmx6g -Djava.io.tmpdir=${SOUT}/tmp -jar /usr/share/gatk-protected/lib/GenomeAnalysisTK.jar -T FlagStat -R ${REFGenomes}/human_g1k_v37.fasta \
     -I ${SOUT}/alignments/${BAM_PREFIX}.bam  \
     -o ${SOUT}/reports/${BAM_PREFIX}.FlagStat;
     
@@ -445,7 +445,7 @@ if [ ! -s ${SOUT}/reports/${BAM_PREFIX}.genomecov.bed ]
 then
 echo " NGSeasy: Running bedtools genomecov [-bga] " `date`
 
-  /usr/local/pipeline/bedtools2/bin/bedtools genomecov -ibam ${SOUT}/alignments/${BAM_PREFIX}.bam -bga > ${SOUT}/reports/${BAM_PREFIX}.genomecov.bed;
+  bedtools genomecov -ibam ${SOUT}/alignments/${BAM_PREFIX}.bam -bga > ${SOUT}/reports/${BAM_PREFIX}.genomecov.bed;
 
 else
   echo " NGSeasy: bedtools genomecov " `date`
@@ -459,7 +459,7 @@ if [ "${NGS_TYPE}" == "TGS" ] && [ -s ${BED_ANNO} ] && [ ! -s ${SOUT}/reports/${
 then
   echo " NGSeasy: Finding TGS coverage over target regions in ${BED_ANNO} " `date`
   
-    java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/local/pipeline/picardtools/picard-tools-1.115/CollectTargetedPcrMetrics.jar \
+    java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/share/picard/lib/CollectTargetedPcrMetrics.jar \
     TMP_DIR=${SOUT}/tmp \
     VALIDATION_STRINGENCY=SILENT \
     MAX_RECORDS_IN_RAM=100000 \
@@ -474,7 +474,7 @@ then
 elif [ "${NGS_TYPE}" == "WEX" ]  && [ -s ${BED_ANNO} ] && [ ! -s ${SOUT}/reports/${BAM_PREFIX}.target_coverage ]
 then
   echo " NGSeasy: Finding WEX Coverage over annotated exons/genes from ensembl " `date`
-    java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/local/pipeline/picardtools/picard-tools-1.115/CollectTargetedPcrMetrics.jar \
+    java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/share/picard/lib/CollectTargetedPcrMetrics.jar \
     TMP_DIR=${SOUT}/tmp \
     VALIDATION_STRINGENCY=SILENT \
     MAX_RECORDS_IN_RAM=100000 \
@@ -489,7 +489,7 @@ then
 elif [ "${NGS_TYPE}" == "WGS" ] && [ ! -s ${SOUT}/reports/${BAM_PREFIX}.target_coverage ]
 then
   echo " NGSeasy: Finding WGS Coverage over 500bp windows " `date`
-    java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/local/pipeline/picardtools/picard-tools-1.115/CollectTargetedPcrMetrics.jar \
+    java -XX:ParallelGCThreads=${NCPU} -Xmx6g -jar /usr/share/picard/lib/CollectTargetedPcrMetrics.jar \
     TMP_DIR=${SOUT}/tmp \
     VALIDATION_STRINGENCY=SILENT \
     MAX_RECORDS_IN_RAM=100000 \
@@ -526,7 +526,7 @@ if [ "${VARCALLER}" == "freebayes" ]
 then
 
 echo " NGSeasy: Starting Variant Calling using Freebayes " `date`
-  /usr/local/pipeline/freebayes/bin/freebayes \
+  freebayes \
     -f ${REFGenomes}/human_g1k_v37.fasta \
     -b ${SOUT}/alignments/${BAM_PREFIX}.bam \
     --min-coverage 10 \
@@ -545,7 +545,7 @@ then
     then
     echo " NGSeasy: NGS_TYPE is Targeted so no duplicate filtering  " `date`
     # for exome/whole genome data no duplicate filtering
-      python /usr/local/pipeline/Platypus_0.7.9.1/Platypus.py callVariants \
+      Platypus.py callVariants \
       --nCPU ${NCPU} \
       --bamFiles=${SOUT}/alignments/${BAM_PREFIX}.bam \
       --refFile=${REFGenomes}/human_g1k_v37.fasta \
@@ -556,7 +556,7 @@ then
   cp -v ${SOUT}/vcf/${BAM_PREFIX}.raw.snps.indels.${VARCALLER}.vcf ${PROJECT_DIR}/${POJECT_ID}/cohort_vcfs/;
       
      else
-	python /usr/local/pipeline/Platypus_0.7.9.1/Platypus.py callVariants \
+	Platypus.py callVariants \
 	  --nCPU ${NCPU} \
 	  --bamFiles=${SOUT}/alignments/${BAM_PREFIX}.bam \
 	  --refFile=${REFGenomes}/human_g1k_v37.fasta \
@@ -571,13 +571,13 @@ then
 elif [ "${VARCALLER}" == "gatk_ug" ]
 then
 #filter bam files paired FILTER IF BWA AND IF CALLING IS USING GATK HC
- /usr/local/pipeline/samtools/samtools view -b -h -q 20 -F 1796 ${SOUT}/alignments/${BAM_PREFIX}.bam  > ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam 
- /usr/local/pipeline/samtools/samtools index ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam;
+ samtools view -b -h -q 20 -F 1796 ${SOUT}/alignments/${BAM_PREFIX}.bam  > ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam 
+ samtools index ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam;
  cp -v ${SOUT}/alignments/${BAM_PREFIX}.filtered.bai ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam.bai;
 
   # UnifiedGenotyper EMIT_ALL_CONFIDENT_SITES
   echo " NGSeasy: Running GATK UnifiedGenotyper " `date`
-  java -Xmx6g -Djava.io.tmpdir=${SOUT}/tmp -jar /usr/local/pipeline/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar -T UnifiedGenotyper -R ${REFGenomes}/human_g1k_v37.fasta -nct ${NCPU} \
+  java -Xmx6g -Djava.io.tmpdir=${SOUT}/tmp -jar /usr/share/gatk-protected/lib/GenomeAnalysisTK.jar -T UnifiedGenotyper -R ${REFGenomes}/human_g1k_v37.fasta -nct ${NCPU} \
   -I ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam \
   -o ${SOUT}/vcf/${BAM_PREFIX}.raw.snps.indels.${VARCALLER}.vcf \
   -stand_call_conf 30 \
@@ -616,12 +616,12 @@ then
 elif [ "${VARCALLER}" == "gatk_hc" ]
 then 
   echo " NGSeasy: Running GATK HaplotypeCaller THIS TAKES A LOOOONG TIME " `date`
-   /usr/local/pipeline/samtools/samtools view -b -h -q 20 -F 1796 ${SOUT}/alignments/${BAM_PREFIX}.bam  > ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam 
- /usr/local/pipeline/samtools/samtools index ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam;
- cp -v ${SOUT}/alignments/${BAM_PREFIX}.filtered.bai ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam.bai;
+  samtools view -b -h -q 20 -F 1796 ${SOUT}/alignments/${BAM_PREFIX}.bam  > ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam 
+  samtools index ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam;
+  cp -v ${SOUT}/alignments/${BAM_PREFIX}.filtered.bai ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam.bai;
 
   ## HaplotypeCaller Standard EMIT_ALL_CONFIDENT_SITES EMIT_VARIANTS_ONLY
-  java -Xmx6g -Djava.io.tmpdir=${SOUT}/tmp -jar /usr/local/pipeline/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar \
+  java -Xmx6g -Djava.io.tmpdir=${SOUT}/tmp -jar /usr/share/gatk-protected/lib/GenomeAnalysisTK.jar \
   -T HaplotypeCaller \
   -R ${REFGenomes}/human_g1k_v37.fasta \
   -nct ${NCPU} \
@@ -662,12 +662,12 @@ then
   
 elif [ "${VARCALLER}" == "gatk_hc_gvcf" ]
 then
-  echo " NGSeasy: Running GATK HaplotypeCaller GVCF THIS TAKES A VERY LOOOONG TIME" `date` 
- /usr/local/pipeline/samtools/samtools view -b -h -q 20 -F 1796 ${SOUT}/alignments/${BAM_PREFIX}.bam  > ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam 
- /usr/local/pipeline/samtools/samtools index ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam;
+ echo " NGSeasy: Running GATK HaplotypeCaller GVCF THIS TAKES A VERY LOOOONG TIME" `date` 
+ samtools view -b -h -q 20 -F 1796 ${SOUT}/alignments/${BAM_PREFIX}.bam  > ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam 
+ samtools index ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam;
  cp -v ${SOUT}/alignments/${BAM_PREFIX}.filtered.bai ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam.bai;
   ## HaplotypeCaller GVCF
-  java -Xmx6g -Djava.io.tmpdir=${SOUT}/tmp -jar /usr/local/pipeline/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar -T HaplotypeCaller -R ${REFGenomes}/human_g1k_v37.fasta -nct ${NCPU} \
+  java -Xmx6g -Djava.io.tmpdir=${SOUT}/tmp -jar /usr/share/gatk-protected/lib/GenomeAnalysisTK.jar -T HaplotypeCaller -R ${REFGenomes}/human_g1k_v37.fasta -nct ${NCPU} \
   -I ${SOUT}/alignments/${BAM_PREFIX}.filtered.bam \
   -o ${SOUT}/vcf/${BAM_PREFIX}.raw.snps.indels.${VARCALLER}.g.vcf \
   -stand_call_conf 30 \
